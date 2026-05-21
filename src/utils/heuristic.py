@@ -16,14 +16,17 @@ def distances(Dm : np.ndarray):
 def clarkeWright(Dm : np.ndarray, 
                  dist : np.ndarray, 
                  size : tuple[int, int],
-                 depots : list, 
-                 colab : list = []):
+                 depots : list,
+                 colab=None):
 
+    if colab is None:
+        colab = []
     N, D = size
     customersID = list(map(int, Dm[D:D+N, 0]))
     routes = {d: None for d in range(D)}
 
     _Dm = assign(Dm, depots, colab)
+    # TODO: one depot, maybe
 
     for d in depots:
 
@@ -65,6 +68,7 @@ def plot(Dm, routes, colab):
         plt.scatter(*Dm[np.isin(Dm[:, -2], d), 1:3].T, c = node_colors[d])
     plt.title(label = f"Instance with colab = {colab}")
 
+    d = 1
     D = len(Dm[np.isin(Dm[:, -2], d)])
     cmap = plt.get_cmap('tab20')
     route_colors = [cmap(i) for i in np.linspace(0, 1, D)]
@@ -78,15 +82,15 @@ def plot(Dm, routes, colab):
     plt.show()
     return 0
 
-def assign(Dm, depots : list, colab : list):
+def assign(Dm, depots : list, colab : list | None = None):
 
     _Dm = Dm.copy()
     if colab:
         mask = (np.isin(Dm[:, 4], colab) * np.isin(Dm[:, 3], 1))
         kmeans = KMeans(n_clusters = len(colab), init = Dm[mask, 1:3], n_init = 1).fit(Dm[:, 1:3])
-        assign = kmeans.labels_.astype(int)
+        assignment = kmeans.labels_.astype(int)
 
-        for i, d in enumerate(assign):
+        for i, d in enumerate(assignment):
             if _Dm[i, -1] in colab and d in colab and _Dm[i, 3] != 1:
                 _Dm[i, -1] = d
     return _Dm
@@ -98,11 +102,9 @@ def cost(route, dist):
 
     return costs
 
-def gain(routes, combo, pre, dist):
+def gain(routes, pre_routes, dist, coalition):
+    _gain = 0
+    for depot in coalition:
+        _gain += cost(pre_routes[depot], dist) - cost(routes[depot], dist)
 
-    costs = 0
-
-    for depot in combo:
-        costs += cost(routes[depot], dist)
-
-    return round(float(pre - costs), 4)
+    return max(round(_gain, 4), 0)

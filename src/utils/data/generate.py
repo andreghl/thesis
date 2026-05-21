@@ -1,12 +1,11 @@
 import numpy as np
 import itertools
 
-from ..heuristics import *
-from ..solutions.shapley import Shapley
-from ..solutions.nucleolus import nucleolus
-from ..instance import instance
+from utils import clarkeWright, instance, assign, distances, cost, gain
+from utils.solutions import shapley, nucleolus
 
-def encodeCoalition(combo, D : int):
+
+def encode_coalition(combo, D : int):
     encoding = np.zeros(D, dtype = np.int32)
     encoding[list(combo)] = 1
     return encoding
@@ -49,7 +48,7 @@ def generate(N, D):
     for size in range(D + 1):
         for combo in itertools.combinations(range(D), size):
 
-            coalitions.append(encodeCoalition(combo, D))
+            coalitions.append(encode_coalition(combo, D))
             # Store assignment of vehicle to nodes
             _Dm = assign(Dm, [0, 1, 2], list(combo))
             A[:, index] = _Dm[:, -1].copy()
@@ -76,21 +75,19 @@ def generate(N, D):
     try:
         n = nucleolus(players, v).values()
     except:
-        print('Nucleolus is infeasible')
         n = np.zeros(D)
 
     try:
-        Sh = Shapley(players, v).values()
+        sh = shapley(players, v).values()
     except:
-        print('Shapley is infeasible')
-        Sh = np.zeros(D)
+        sh = np.zeros(D)
 
     coalitions = np.array(coalitions)
-    Sh = np.array(list(Sh))
+    sh = np.array(list(sh))
     n = np.array(list(n))
     v = np.array(list(v.values()))
             
-    return Dm, A, coalitions, v, Sh, n
+    return Dm, A, coalitions, v, sh, n
 
 
 

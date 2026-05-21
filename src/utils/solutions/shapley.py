@@ -1,8 +1,8 @@
 import math
 from collections import defaultdict
 
-def Shapley(N : list, v : dict) -> dict:
-    Shapley = defaultdict(int)
+def shapley(N : list, v : dict) -> dict:
+    _shapley = defaultdict(int)
     n = len(N)
 
     for i in N:
@@ -12,9 +12,9 @@ def Shapley(N : list, v : dict) -> dict:
                 w = math.factorial(s) * math.factorial(n - s - 1)
                 w = w / math.factorial(n)
 
-                Shapley[i] += w * (v[S | {i}] - v[S])
+                _shapley[i] += w * (v[S | {i}] - v[S])
     
-    return dict(Shapley)
+    return dict(_shapley)
 
 """ Example
 
