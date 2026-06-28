@@ -1,1 +1,0 @@
-source /c/Code/EMTH0001/.venv/Scripts/activate

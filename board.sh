@@ -1,1 +1,1 @@
-tensorboard serve --logdir src/data/runs/
+tensorboard serve --logdir data/runs

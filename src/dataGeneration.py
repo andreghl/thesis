@@ -26,7 +26,7 @@ n_depots = 3
 n_coalitions = 2 ** n_depots
 n_nodes = n_depots + n_customers
 
-with h5py.File("data/instances.h5", "w") as f:
+with h5py.File("data/trash.h5", "w") as f:
         
     Dm = f.create_dataset("Dm", shape = (runs, n_nodes, 5), dtype = np.float32)
     assign = f.create_dataset("assign", shape = (runs, n_nodes, n_coalitions), dtype = np.int32)
