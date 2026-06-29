@@ -1,1 +1,0 @@
-from .coalitions import CoalitionNN

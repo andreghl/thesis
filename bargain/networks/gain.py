@@ -282,6 +282,7 @@ def train_one_model(model : nn.Module,
                     criterion : nn.Module,
                     optimizer,
                     device : torch.device,
+                    writer : SummaryWriter,
                     n_epochs : int = 5,
                     log_every : int = 2,
                     label : str = "model"):
@@ -295,13 +296,6 @@ def train_one_model(model : nn.Module,
         "grad_absmax": []
     }
 
-    # FIXME: taken from Leo AI
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    log_dir = f"data/runs/{timestamp}"
-    os.makedirs(log_dir, exist_ok=True)
-    # until here
-    writer = SummaryWriter(log_dir = log_dir)
-
     for epoch in range(n_epochs):
         model.train()
 
@@ -310,7 +304,7 @@ def train_one_model(model : nn.Module,
         total_grad_norm = 0.0
         total_grad_absmax = 0.0
         n_batches = 0
-        filename = "data/models/" + label + "-" + timestamp + ".pth"
+        filename = "data/models/" + label + ".pth"
 
         for batch_id, (instances, coalitions, values) in enumerate(train, start = 1):
             instances = instances.to(device)
@@ -370,15 +364,15 @@ def train_one_model(model : nn.Module,
         history["eval_loss"].append(eval_loss)
         history["grad_norm"].append(avg_grad_norm)
         history["grad_absmax"].append(avg_grad_absmax)
-        history["name"] = label + "-" + timestamp
+        history["name"] = label
         # TODO: add final output string and measure time.
-    writer.close()
     return history
 
 def train_model(model : nn.Module,
                 train : DataLoader,
                 valid : DataLoader,
                 device : torch.device,
+                writer : SummaryWriter,
                 n_epochs : int = 5,
                 learning_rate : float = 0.1,
                 weight_decay : float = 0.0,
@@ -404,6 +398,7 @@ def train_model(model : nn.Module,
                               criterion = criterion,
                               optimizer = optimizer,
                               device = device,
+                              writer = writer,
                               n_epochs = n_epochs,
                               log_every = log_every,
                               label = label)
@@ -412,8 +407,16 @@ def train_model(model : nn.Module,
 
 if __name__ == "__main__":
 
-    seeds = [0, 1, 2]
+    seeds = [0]
     model = GainNN()
+
+    # FIXME: taken from Leo AI
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_dir = f"data/runs/{timestamp}"
+    os.makedirs(log_dir, exist_ok=True)
+    writer = SummaryWriter(log_dir = log_dir)
+    label = "GainNN-" + timestamp
+
 
     for run, seed in enumerate(seeds, start = 1):
 
@@ -421,12 +424,12 @@ if __name__ == "__main__":
 
         n_epochs = 100
         batch_size = 64
-        learning_rate = 1e-4
-        val_fraction = 0.1
+        learning_rate = 1e-5
+        val_fraction = 0.2
         weight_decay = 0.01
 
         device = get_device(); print("device:", str(device))
-        dataset = H5Dataset(path = "data/instances.h5",
+        dataset = H5Dataset(path = "data/train.h5",
                             features = ['instance', 'coalitions'],
                             target = 'char_function')
 
@@ -439,10 +442,13 @@ if __name__ == "__main__":
                                      train = train,
                                      valid = valid,
                                      device = device,
+                                     writer = writer,
                                      n_epochs = n_epochs,
                                      learning_rate = learning_rate,
-                                     weight_decay = weight_decay)
+                                     weight_decay = weight_decay,
+                                     label = label)
 
+        writer.close()
         history["n_epochs"] = n_epochs
         history["device"] = str(device)
         history["learning_rate"] = learning_rate
