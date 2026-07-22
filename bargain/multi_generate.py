@@ -1,9 +1,9 @@
 from .coalitions.players import get_players
 from .coalitions.solutions import nucleolus, shapley
 from .coalitions.utilities import get_coalitions_encode, yield_coalitions
-from .routing.instance import generate_instance
-from .routing.heuristics import clarke_wright, assign_customers
-from .routing.utilities import distances, gain, plot
+from .routing.multi.instance import generate_instance
+from .routing.multi.heuristics import clarke_wright, assign_customers
+from .routing.multi.utilities import distances, gain, plot
 from tqdm import tqdm
 
 import h5py
@@ -61,7 +61,6 @@ def generate_observation(n_depots : int,
         An instance matrix, a (2**n x n) matrix containing the vehicle assignment
         for each possible coalition, a vector of binary encoded coalitions, a vector
         of the characteristic function, the shapley value and the nucleolus.
-
     """
     if isinstance(radius, float):
         _radius = radius

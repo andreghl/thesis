@@ -24,7 +24,6 @@ def distances(instance : np.ndarray):
         A (n x n) matrix containing the distance between any pair of
         nodes (i, j) indexed by their id.
     """
-
     n = instance.shape[0]
     distance = np.zeros((n, n), dtype = np.float64)
 
@@ -50,7 +49,6 @@ def gain(routes : dict[int, list], initial_routes : dict[int, list], distance : 
     Returns:
         A float representing the difference between the total distance of the initial
         routes and the current collaboration routes.
-
     """
     _gain = 0
     depots = set(routes.keys()).union(initial_routes.keys())

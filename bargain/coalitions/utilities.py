@@ -7,7 +7,7 @@ def get_coalitions_encode(n_players : int = 3):
     return list(itertools.product(values, repeat = n_players))
 
 
-def encode_coalition(coalition : list, n_depots : int):
+def encode_coalition(coalition : list, n_depots : int = 3):
     """Returns a binary indicator vector for a list of depots in a coalition.
 
     Args:
@@ -17,7 +17,7 @@ def encode_coalition(coalition : list, n_depots : int):
     Returns:
         A binary array of size n_depots taking a value of 1 at the indices in the coalition.
     """
-    encoding = np.zeros(n_depots, dtype = np.int32)
+    encoding = np.zeros(n_depots, dtype = np.float32)
     coalition = np.asarray(coalition, dtype = np.int32)
     encoding[coalition] = 1
 

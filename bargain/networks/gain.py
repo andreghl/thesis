@@ -19,7 +19,7 @@ class GainNN(nn.Module):
         super().__init__()
 
         self.instance = nn.Sequential(
-            nn.Linear(48, 256),
+            nn.Linear(40, 256),
             nn.ReLU(),
             nn.Linear(256, 256),
             nn.ReLU()
@@ -79,9 +79,9 @@ class GainNN(nn.Module):
             instances = instances.to(device)
         # (n_batches, n_nodes, n_cols) => (n_batches, 1, n_nodes, n_cols)
         instances = instances.unsqueeze(1)
-        # (n_batches, 1, n_nodes, n_cols) => (n_batches, 8, n_nodes, n_cols)
-        instances = instances.repeat(1, 8, 1, 1)
-        # (n_batches, 8, n_nodes, n_cols) => (8 * n_batches, n_nodes * n_cols)
+        # (n_batches, 1, n_nodes, n_cols) => (n_batches, 4, n_nodes, n_cols)
+        instances = instances.repeat(1, n_coalitions, 1, 1)
+        # (n_batches, 4, n_nodes, n_cols) => (4 * n_batches, n_nodes * n_cols)
         rows = n_batches * n_coalitions
         cols = n_nodes * n_param
         instances = instances.view(rows, cols)
@@ -138,6 +138,7 @@ def compute_grad_norms(model : nn.Module):
     max_abs_grad = 0.0
 
     for param in model.parameters():
+        #TODO: print of number of parameters, and parameters with grad.
         if param.grad is None:
             continue
 
@@ -211,7 +212,7 @@ def test_run(model : nn.Module,
     model.train()
 
     # generate data with the expected shape for the GainNN class
-    instances = torch.randn(size = (1, 12 * 4),
+    instances = torch.randn(size = (1, 10 * 4),
                             device = device).float()
     coalitions = torch.randint(low = 0,
                                high = 2,
@@ -268,6 +269,8 @@ def evaluate(model : nn.Module,
                                                       values,
                                                       device)
 
+
+
         output = model(instances, coalitions)
         loss = criterion(output, values)
 
@@ -285,7 +288,8 @@ def train_one_model(model : nn.Module,
                     writer : SummaryWriter,
                     n_epochs : int = 5,
                     log_every : int = 2,
-                    label : str = "model"):
+                    label : str = "model",
+                    run : int = 0):
     """"""
     # TODO: add docstring to 'train_one_model' method.
     history = {
@@ -307,8 +311,6 @@ def train_one_model(model : nn.Module,
         filename = "data/models/" + label + ".pth"
 
         for batch_id, (instances, coalitions, values) in enumerate(train, start = 1):
-            instances = instances.to(device)
-            coalitions = coalitions.to(device)
 
             instances, coalitions, values = model.transform(instances, coalitions, values, device)
 
@@ -340,21 +342,23 @@ def train_one_model(model : nn.Module,
         avg_grad_absmax = total_grad_absmax / n_batches
         eval_loss = evaluate(model, valid, criterion, device)
 
+        step = (n_epochs * run) + epoch
+
         writer.add_scalar(tag = "train/loss",
                           scalar_value = train_loss,
-                          global_step = epoch)
+                          global_step = step)
 
         writer.add_scalar(tag = "train/grad_norm",
                           scalar_value = avg_grad_norm,
-                          global_step = epoch)
+                          global_step = step)
 
         writer.add_scalar(tag = "train/grad_absmax",
                           scalar_value = avg_grad_absmax,
-                          global_step = epoch)
+                          global_step = step)
 
         writer.add_scalar(tag = "eval/loss",
                           scalar_value = eval_loss,
-                          global_step = epoch)
+                          global_step = step)
 
         if epoch %  log_every == 0:
             torch.save(model.state_dict(), filename)
@@ -377,7 +381,8 @@ def train_model(model : nn.Module,
                 learning_rate : float = 0.1,
                 weight_decay : float = 0.0,
                 log_every : int = 100,
-                label : str = "GainNN"):
+                label : str = "GainNN",
+                run : int = 0):
     """"""
     # TODO: add docstring to 'train_model' method.
 
@@ -401,13 +406,16 @@ def train_model(model : nn.Module,
                               writer = writer,
                               n_epochs = n_epochs,
                               log_every = log_every,
-                              label = label)
+                              label = label,
+                              run = run)
 
     return model, history
 
 if __name__ == "__main__":
 
-    seeds = [0]
+
+
+    seeds = [354]
     model = GainNN()
 
     # FIXME: taken from Leo AI
@@ -418,20 +426,20 @@ if __name__ == "__main__":
     label = "GainNN-" + timestamp
 
 
-    for run, seed in enumerate(seeds, start = 1):
+    for run, seed in enumerate(seeds):
 
         torch.manual_seed(seed)
 
-        n_epochs = 100
+        n_epochs = 30
         batch_size = 64
-        learning_rate = 1e-5
+        learning_rate = 1e-3
         val_fraction = 0.2
-        weight_decay = 0.01
+        weight_decay = 0.0
 
         device = get_device(); print("device:", str(device))
-        dataset = H5Dataset(path = "data/train.h5",
+        dataset = H5Dataset(path = "data/single_instances2.h5",
                             features = ['instance', 'coalitions'],
-                            target = 'char_function')
+                            target = 'gain')
 
         train, valid = make_loaders(dataset,
                                     batch_size = batch_size,
@@ -446,7 +454,8 @@ if __name__ == "__main__":
                                      n_epochs = n_epochs,
                                      learning_rate = learning_rate,
                                      weight_decay = weight_decay,
-                                     label = label)
+                                     label = label,
+                                     run = run)
 
         writer.close()
         history["n_epochs"] = n_epochs
@@ -454,7 +463,7 @@ if __name__ == "__main__":
         history["learning_rate"] = learning_rate
         history["weight_decay"] = weight_decay
         history["data_size"] = len(dataset)
-        history["run"] = run
+        history["seeds"] = seeds
 
         """
         for key, values in history.items():
