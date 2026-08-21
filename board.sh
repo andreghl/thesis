@@ -1,1 +1,0 @@
-tensorboard serve --logdir data/runs

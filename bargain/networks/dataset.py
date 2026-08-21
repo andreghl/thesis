@@ -34,11 +34,11 @@ class H5Dataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx):
+    def __getitem__(self, index: int):
         item = {}
-        target = self.file[self.target][idx]
+        target = self.file[self.target][index]
         for feature in self.features:
-            item[feature] = self.file[feature][idx]
+            item[feature] = self.file[feature][index]
 
         return *item.values(), target
 
