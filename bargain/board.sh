@@ -1,0 +1,1 @@
+tensorboard serve --logdir bargain/data/logs/agents
