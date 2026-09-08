@@ -1,6 +1,6 @@
 *.venv/
 *.pyc
 *.idea/
-*data/
 *learn/
 *src/
+*bargain/data
