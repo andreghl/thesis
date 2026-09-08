@@ -156,7 +156,7 @@ def train(model: nn.Module,
           val_fraction: float = 0.2,
           seed: int = 0,
           label: str = "model",
-          log_dir: str = "data/runs",
+          log_dir: str = "data/logs/networks",
           verbose: int = 0,
           log_every: int | None = 10):
 

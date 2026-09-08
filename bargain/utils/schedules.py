@@ -7,7 +7,6 @@ class SimpleLinearSchedule:
     """
 
     def __init__(self, initial_value: float | str) -> None:
-        # Force conversion to float
         self.initial_value = float(initial_value)
 
     def __call__(self, progress_remaining: float) -> float:
@@ -18,10 +17,12 @@ class SimpleLinearSchedule:
 
 
 def linear_schedule(initial_value: float | str) -> SimpleLinearSchedule:
-    """
-    Linear learning rate schedule.
+    """Instantiate a SimpleLinearSchedule (SB3) with a given value.
 
-    :param initial_value: (float or str)
-    :return: A `SimpleLinearSchedule` object
+    Args:
+        initial_value: a float or a string containing the starting value.
+
+    Returns:
+         A `SimpleLinearSchedule` object.
     """
     return SimpleLinearSchedule(initial_value)

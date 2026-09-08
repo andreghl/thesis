@@ -15,7 +15,7 @@ def tune(model: nn.Module,
          target: str,
          seed: int = 0,
          label: str = "model",
-         log_dir: str = "data/runs/tune"):
+         log_dir: str = "data/logs/tuning"):
 
     queue = []
     heapq.heapify(queue)
@@ -23,7 +23,7 @@ def tune(model: nn.Module,
 
     for i in range(n_models):
 
-        params = {}
+        params = {'seed': seed}
 
         for key, (low, high) in parameters.items():
             if key == "batch_size":
@@ -38,7 +38,6 @@ def tune(model: nn.Module,
                          data_path = data_path,
                          features = features,
                          target = target,
-                         seed = seed,
                          label = label,
                          log_dir = log_dir,
                          verbose = 0,

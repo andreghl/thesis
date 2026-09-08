@@ -54,7 +54,7 @@ class GainExtractor(BaseFeaturesExtractor):
         })
 
         if path is not None and load:
-            self.load(path)
+                self.load(path)
 
     def forward(self, obs: gym.spaces.Dict):
 

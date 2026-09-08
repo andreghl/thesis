@@ -1,6 +1,7 @@
+# Coded with Claude AI and Brave Leo AI
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.type_aliases import PyTorchObs, Schedule
-from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, MlpExtractor
+from stable_baselines3.common.torch_layers import MlpExtractor
 from .distribution import CustomDistribution
 from .extractor import GainExtractor
 from functools import partial
@@ -17,6 +18,8 @@ class BargainPolicy(ActorCriticPolicy):
         super().__init__(*args,
                          activation_fn = nn.ReLU,
                          features_extractor_class = GainExtractor,
+                         share_features_extractor = True,
+                         net_arch = dict(pi = [64, 64], vf = [256, 256]),
                          features_extractor_kwargs = {
                              "features_dim": kwargs.pop("features_dim", 320),
                              "instance_size": kwargs.pop("instance_size", 40),
@@ -24,18 +27,6 @@ class BargainPolicy(ActorCriticPolicy):
                              "path": kwargs.pop("path", None),
                              "load": kwargs.pop("load", True)},
                          **kwargs)
-
-
-
-    def forward(self, obs, deterministic = False):
-        features = self.extract_features(obs)
-        latent_pi, latent_vf = self.mlp_extractor(features)
-        values = self.value_net(latent_vf)
-        role = obs["role"].reshape(-1).long()
-        distribution = self._get_action_dist_from_latent(latent_pi, role)
-        actions = distribution.get_actions(deterministic = deterministic)
-        log_prob = distribution.log_prob(actions)
-        return actions, values, log_prob
 
     def _get_action_dist_from_latent(self, latent_pi, role):
         mean_actions = self.action_net(latent_pi)
@@ -118,7 +109,6 @@ class BargainPolicy(ActorCriticPolicy):
         distribution = self._get_action_dist_from_latent(latent_pi, role)
         actions = distribution.get_actions(deterministic=deterministic)
         log_prob = distribution.log_prob(actions)
-        print("FORWARD", actions.shape)
 
         actions = actions.reshape((-1, *self.action_space.shape))  # type: ignore[misc]
         return actions, values, log_prob
@@ -151,7 +141,8 @@ class BargainPolicy(ActorCriticPolicy):
             pi_features, vf_features = features
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
-            role = obs["role"]
+
+        role = obs["role"]
         distribution = self._get_action_dist_from_latent(latent_pi, role)
         log_prob = distribution.log_prob(actions)
         values = self.value_net(latent_vf)
@@ -166,5 +157,22 @@ class BargainPolicy(ActorCriticPolicy):
         :return: the estimated values.
         """
         features = super().extract_features(obs, self.vf_features_extractor)
-        latent_vf = self.mlp_extractor.forward_critic(features)
+
+        if self.share_features_extractor:
+            latent_vf = self.mlp_extractor.forward_critic(features)
+        else:
+            _, vf_features = features
+            latent_vf = self.mlp_extractor.forward_critic(vf_features)
         return self.value_net(latent_vf)
+
+    def get_distribution(self, obs: PyTorchObs) -> Distribution:
+        """
+        Get the current policy distribution given the observations.
+
+        :param obs:
+        :return: the action distribution.
+        """
+        role = obs["role"]
+        features = super().extract_features(obs, self.pi_features_extractor)
+        latent_pi = self.mlp_extractor.forward_actor(features)
+        return self._get_action_dist_from_latent(latent_pi, role)
