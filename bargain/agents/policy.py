@@ -1,5 +1,6 @@
 # Coded with Claude AI and Brave Leo AI
 from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.distributions import Distribution
 from stable_baselines3.common.type_aliases import PyTorchObs, Schedule
 from stable_baselines3.common.torch_layers import MlpExtractor
 from .distribution import CustomDistribution
