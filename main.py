@@ -9,12 +9,12 @@ a, b = 0, 2026
 random.seed(seed)
 n_runs: int = 3
 load_ext: bool = True
-total_timesteps: int = 20000
+total_timesteps: int = 200000
 
 
 print("Generating observations...")
 generate_observations(filename = "data/instances.h5",
-                      obs = 10000,
+                      obs = 1000000,
                       vehicles = 3,
                       customers = 9,
                       radius = 1.0,
@@ -22,7 +22,7 @@ generate_observations(filename = "data/instances.h5",
 
 print("Generating observations for hyperparameter tuning...")
 generate_observations(filename = "data/tune.h5",
-                      obs = 1000,
+                      obs = 100000,
                       vehicles = 3,
                       customers = 9,
                       radius = 1.0,
@@ -45,7 +45,7 @@ score, params = net.tune(model = GainNN(),
                      features = ["instance", "coalitions"],
                      target = "gain",
                      label = "GainNN",
-                     tune_epochs = 3,
+                     tune_epochs = 10,
                      seed = random.randint(a, b))
 
 print(f"Selected parameters: {params} with score {score}")
@@ -54,6 +54,8 @@ save_params(params = params,
             model_name = "GainNN")
 
 print("Training Gain network...")
+
+params = {key: value for key, value in params.items() if key not in ['seed', 'score']}
 net.train(**params,
       model = GainNN(),
       n_epochs = 30,

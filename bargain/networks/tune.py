@@ -15,7 +15,7 @@ def tune(model: nn.Module,
          target: str,
          seed: int = 0,
          label: str = "model",
-         log_dir: str = "data/logs/tuning"):
+         log_dir: str = "data/logs/tune"):
 
     queue = []
     heapq.heapify(queue)
