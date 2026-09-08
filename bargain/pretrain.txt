@@ -1,0 +1,74 @@
+names = ["Responder-v0", "Proposer-v0", "Bargain-v0"]
+seeds = []
+
+random.seed(2026)
+for i in range(len(names)):
+    seed = random.randint(a = 0, b = 6000)
+    seeds.append(seed)
+
+new: bool = True
+n_envs: int = 1
+n_vehicles: int = 3
+n_customers: int = 9
+load: bool = True
+initial_value: float = 3e-5
+n_epochs: int = 3
+features_dim: int = 320
+instance_size: int = 40
+ent_coef: float = 0.05
+clip_range: float = 0.02
+total_timesteps: int = 500000
+verbose: int = 2
+
+for i, name in enumerate(names):
+
+    log_path = f"data/logs/agents/{name}"
+    log_path =  None
+    agent_path = "data/agents/delete"
+
+    env = make_vec_env(env_id = name,
+                       n_envs = n_envs,
+                       seed = seeds[i],
+                       env_kwargs = {
+                           "n_vehicles": n_vehicles,
+                           "n_customers": n_customers
+                       })
+
+    if not os.path.exists(agent_path + ".zip") or new:
+
+        model = PPO(policy = BargainPolicy,
+                    env = env,
+                    learning_rate = initial_value,
+                    gamma = 0.99,
+                    clip_range = clip_range if name == "Bargain-v0" else 0.2,
+                    batch_size = 256,
+                    n_epochs = n_epochs,
+                    verbose = verbose,
+                    tensorboard_log = log_path,
+                    policy_kwargs = {
+                        "features_dim": features_dim,
+                        "instance_size": instance_size,
+                        "n_vehicles": n_vehicles,
+                        "path": 'data/models/GainNN.pth',
+                        "load": load},
+                    ent_coef = ent_coef if name != "Bargain-v0" else 0.1,
+                    vf_coef = 0.5 if name != "Bargain-v0" else 0.6)
+
+    else:
+        model = PPO.load(agent_path,
+                         env = env,
+                         tensorboard_log = log_path,
+                         n_epochs = n_epochs,
+                         policy_kwargs = {
+                             "features_dim": features_dim,
+                             "instance_size": instance_size,
+                             "n_vehicles": n_vehicles,
+                             "path": 'data/models/GainNN.pth',
+                             "load": load},
+                         ent_coef = ent_coef,
+                         verbose = verbose)
+        print(f"> PPO agent loaded from {agent_path}")
+
+    model.learn(total_timesteps = total_timesteps,
+                reset_num_timesteps = new)
+    model.save(agent_path)
