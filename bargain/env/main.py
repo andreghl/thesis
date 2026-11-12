@@ -26,7 +26,8 @@ class Bargain(gym.Env):
     def __init__(self,
                  n_vehicles: int,
                  n_customers: int,
-                 max_time = 10):
+                 max_time = 10,
+                 random_start: bool = True):
 
         self.action_dim = 2 * n_vehicles + 1
         self.n_vehicles = n_vehicles
@@ -34,6 +35,7 @@ class Bargain(gym.Env):
         self.max_time = max_time
         self.max_steps = n_vehicles + 2
         self.timestep = 0
+        self.random_start = random_start
 
         self.action_space = Box(low = 0,
                                 high = 1,
@@ -66,6 +68,8 @@ class Bargain(gym.Env):
         self.shapley = None
         self.nucleolus = None
         self.order = None
+        self.order_reward = None
+
 
     def reset(self,
               seed: int | None = None,
@@ -87,6 +91,7 @@ class Bargain(gym.Env):
                                  size = self.n_vehicles,
                                  replace = False)
         self.order = list(order)
+        self.order_reward = list(order)
 
         proposer = self.order.pop()
         coalition = coalition_heuristic(self.coalitions, self.gains, dtype = self._BIN)
@@ -98,7 +103,7 @@ class Bargain(gym.Env):
                "coalition": coalition,
                "proposal": proposal,
                "response": response,
-               "time": self.observation_space["time"].sample(),
+               "time": self.observation_space["time"].sample() if self.random_start else self.max_time - 1,
                "proposer": proposer,
                "agent": proposer,
                "role": self._INT(role)}
@@ -132,20 +137,24 @@ class Bargain(gym.Env):
 
             if not self.order:
                 self.obs["role"] = 2
-                self.obs["agent"] = 0
+                # self.obs["agent"] = 0
+                self.obs["agent"] = self.order_reward.pop()
             else:
                 self.obs["agent"] = self.order.pop()
 
         if role == 2:
             reward = self.reward()
             terminated = self.terminated()
-            self.obs["agent"] = (self.obs["agent"] + 1) % self.n_vehicles
+            # self.obs["agent"] = (self.obs["agent"] + 1) % self.n_vehicles
+            self.obs["agent"] = self.order_reward.pop()
 
-            if self.obs["agent"] == 0:
+            # if self.obs["agent"] == 0:
+            if len(self.order_reward) == 0:
                 order = np.random.choice(np.arange(self.n_vehicles),
                                          size = self.n_vehicles,
                                          replace = False)
                 self.order = list(order)
+                self.order_reward = list(order)
                 proposer = self.order.pop()
                 self.obs["proposer"] = proposer
                 self.obs["agent"] = proposer
@@ -208,6 +217,19 @@ class Bargain(gym.Env):
             self.obs["time"] = 0
         return bool(time < 0)
 
+    def change_instance(self, instance: np.ndarray, proposer: int = 1, agent: int = 0, time: int = 0):
+
+        self.instance = instance
+        self.obs["instance"] = flatten(self.instance[:, 1:], dtype = self._FLOAT)
+        self.obs["coalition"] = np.ones(3)
+        self.obs["response"] = np.zeros(3)
+        self.obs["response"][proposer] = 1
+        self.obs["proposer"] = proposer
+        self.obs["agent"] = agent
+        self.obs["role"] = 1
+        self.obs["time"] = time
+
+        return None
 
 """
 if __name__ == "__main__":

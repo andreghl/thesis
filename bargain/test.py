@@ -1,64 +1,77 @@
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3 import PPO
-from env.dummies import mask
+from bargain.tests import test_agent
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 import numpy as np
 import bargain.env
+import json
 
+n_episodes = 1000
+max_time = 9
 
-name = "Bargain-v0"
-agent_path = f"data/agents/bargain"
-n_envs = 1
-n_vehicles = 3
+"""
+test_agent(test_env = "Bargain-v0",
+           agent_path = "data/agents/1/bargain_3241",
+           data_path = "data/tests/",
+           n_episodes = n_episodes)
+"""
 
-env = make_vec_env(env_id = name,
-                   n_envs = n_envs,
-                   env_kwargs = {
-                       "n_vehicles": n_vehicles,
-                       "n_customers": 9
-                   })
+with open("data/tests/test_agent.json") as f:
+    data = json.load(f)
 
-test = PPO.load(agent_path)
-state = env.reset()
+data = pd.DataFrame.from_dict(data)
 
-dones = np.full(shape = n_envs, fill_value = False)
+time = np.zeros(n_episodes)
+coalition = np.zeros(shape = (3, n_episodes * 10))
+proposal = np.zeros(shape = (3, n_episodes * 10))
+response = np.zeros(shape = (3, n_episodes * 10))
 
-while not np.any(dones):
+agreement = np.zeros(shape = (3, n_episodes))
+truncated = np.zeros(n_episodes)
 
-    agents = state["agent"]
-    times = state["time"]
-    roles = state["role"]
-    _obs = state.copy()
-    print({k: v for k, v in state.items() if k not in ["instance", "agent", "role", "time"]})
-    actions, next_state = test.predict(state)
-    state, rewards, dones, info = env.step(actions)
+shapley = np.zeros(shape = (3, n_episodes))
+nucleolus = np.zeros(shape = (3, n_episodes))
 
-    actions = actions[:, mask(*actions, *roles, n_vehicles)]
-    if len(actions) == 0:
-        actions = [-1]
+for e in range(n_episodes):
 
-    for i in info:
-        if "episode" in i.keys():
-            print(i["episode"])
+    times = data[str(e)].loc['time']
+    time[e] = len(times)
+    truncated[e] = data[str(e)].loc['truncated']
 
+    if not truncated[e]:
+        agreement[:, e] = np.asarray(data[str(e)].loc['proposal'][-1])
+    else:
+        agreement[:, e] = np.zeros(3)
 
-    print(f"{'Time':<5} {'Agent':<5} {'Role':<5} {'Action':<40} {'Reward':<5} {'Done':<5}")
-    print("-" * 75)
+    for k, t in enumerate(times):
+        x = e + (max_time - t)
+        coalition[:, x] = np.asarray(data[str(e)].loc['coalition'][k])
+        proposal[:, x] = np.asarray(data[str(e)].loc['proposal'][k])
+        response[:, x] = np.asarray(data[str(e)].loc['response'][k])
+        shapley[:, e] = np.asarray(data[str(e)].loc['shapley'])
+        nucleolus[:, e] = np.asarray(data[str(e)].loc['nucleolus'])
 
-    for time, agent, role, action, reward, done in list(zip(times, agents, roles, actions, rewards, dones)):
-        print(f"{time:<5} {agent:<5} {role:<5} {str(action):<40} {reward:<5} {done:<5}")
+sns.histplot(time, bins = 6)
+plt.show()
 
-    print("\n")
+valid = np.logical_not(truncated)
 
-for i in info:
-    info = i
+print("Means")
+print('coalitions', coalition.mean(axis = -1, where = proposal > 0))
+print('responses', response.mean(axis = -1, where = proposal > 0))
+print('proposals', proposal.mean(axis = -1, where = proposal > 0))
+print('agreements', agreement.mean(axis = -1, where = valid))
+print('shapley', shapley.mean(axis = -1))
+print('nucleolus', nucleolus.mean(axis = -1))
+print('truncated:', sum(truncated) / len(truncated))
 
-print("\n")
-print(f"Terminal observation: (Truncated: {info['TimeLimit.truncated']})")
-print("=" * 70)
-print({k: v for k, v in info["terminal_observation"].items() if k not in ["instance", "time", "agent", "role"]})
-print(info["episode"])
+agent = 1
+plt.scatter(shapley[agent, valid], agreement[agent, valid])
+plt.xlabel('Shapley value')
+plt.ylabel('Proposed share')
+plt.show()
 
-shapley = env.envs[0].env.unwrapped.shapley
-print("shapley", shapley / np.sum(shapley))
-nucleolus = env.envs[0].env.unwrapped.nucleolus
-print("nucleolus", nucleolus / np.sum(nucleolus))
+plt.scatter(nucleolus[agent, valid], agreement[agent, valid])
+plt.xlabel('nucleolus')
+plt.ylabel('Proposed share')
+plt.show()

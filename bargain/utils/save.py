@@ -25,3 +25,20 @@ def save_params(params : dict,
 
     with open(filename, 'w') as f:
         json.dump(data, f)
+
+
+def read_params(path: str = "data/logs/params/GainNN_0.json"):
+
+    params = {}
+
+    os.makedirs(path, exist_ok = True)
+    if check_path(path):
+        with open(path, 'w') as f:
+            params = json.load(f)
+    else:
+        print(f"File {path} does not exist!")
+
+    return params
+
+
+

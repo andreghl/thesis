@@ -1,0 +1,42 @@
+/home/andre/code/thesis/.venv/bin/python /home/andre/code/thesis/main.py
+
+> Running PPO:
+    Seed: 1024
+    Extractor: True
+    Timesteps: 5000000
+    Path: data/agents/bargain_1024
+    Environement: Bargain-v0
+==================================
+
+/home/andre/code/thesis/.venv/lib/python3.14/site-packages/gymnasium/envs/registration.py:728: UserWarning: WARN: The environment is being initialised with render_mode='rgb_array' that is not in the possible render_modes ([]).
+  logger.warn(
+> GainNN loaded from data/models/GainNN.pth
+/home/andre/code/thesis/.venv/lib/python3.14/site-packages/stable_baselines3/common/evaluation.py:71: UserWarning: Evaluation environment is not wrapped with a ``Monitor`` wrapper. This may result in reporting modified episode lengths and rewards, if other wrappers happen to modify these. Consider wrapping environment first with ``Monitor`` wrapper.
+  warnings.warn(
+ 100% ━━━━━━━━━━━━━━━━━━━━ 5,001,216/5,000,000  [ 4:05:30 < 0:00:00 , 222 it/s ]
+/home/andre/code/thesis/.venv/lib/python3.14/site-packages/gymnasium/envs/registration.py:728: UserWarning: WARN: The environment is being initialised with render_mode='rgb_array' that is not in the possible render_modes ([]).
+  logger.warn(
+
+> Running PPO:
+    Seed: 2048
+    Extractor: True
+    Timesteps: 5000000
+    Path: data/agents/bargain_2048
+    Environement: Bargain-v0
+==================================
+
+> GainNN loaded from data/models/GainNN.pth
+ 100% ━━━━━━━━━━━━━━━━━━━━ 5,001,216/5,000,000  [ 4:33:36 < 0:00:00 , 294 it/s ]
+
+> Running PPO:
+    Seed: 4096
+    Extractor: True
+    Timesteps: 5000000
+    Path: data/agents/bargain_4096
+    Environement: Bargain-v0
+==================================
+
+> GainNN loaded from data/models/GainNN.pth
+ 100% ━━━━━━━━━━━━━━━━━━━━ 5,001,216/5,000,000  [ 4:36:31 < 0:00:00 , 321 it/s ]
+
+Process finished with exit code 0

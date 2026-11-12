@@ -35,7 +35,7 @@ def compute_shapley(players : list, char_function : dict):
 def generate_observation(n_vehicles : int,
                          n_customers : int,
                          radius : list[float] | float = 0.3,
-                         show_plots : bool = False):
+                         seed: int | None = None):
     """Compute the relevant utilities for a single instance of the
     collaborative vehicle routing problem.
 
@@ -45,14 +45,15 @@ def generate_observation(n_vehicles : int,
         instance.
         radius: float representing the degree of overlap between the customer
         nodes of different vehicles.
-        show_plots: boolean determining whether to plot the routes for each
-        coalition.
+        seed: reproducibilty
 
     Returns:
         An instance matrix, a (2**n x n) matrix containing the vehicle assignment
         for each possible coalition, a vector of binary encoded coalitions, a vector
         of the characteristic function, the shapley value and the nucleolus.
     """
+
+    np.random.seed(seed)
 
     radius = float(np.random.choice(radius)) if isinstance(radius, list) else radius
     instance = generate_instance(n_vehicles, n_customers, radius)

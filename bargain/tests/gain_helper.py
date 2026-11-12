@@ -45,7 +45,7 @@ def test_gain_net(path : str, seed : int | None = None):
 
     return values.t(), char_function.t()
 
-def tests_gain_net(path: str, n_tests: int, seed: int | None = None):
+def tests_gain_net(path: str, n_tests: int, seed: int | None = None, reshape: bool = True):
     """Return the predicted and actual values of a set of randomly generated instances.
 
     Args:
@@ -66,5 +66,9 @@ def tests_gain_net(path: str, n_tests: int, seed: int | None = None):
         values[n] = _values
         gains[n] = _gains
 
-    return values.reshape(n_tests * 4, ), gains.reshape(n_tests * 4, )
+    if reshape:
+        return values.reshape(n_tests * 4, ), gains.reshape(n_tests * 4, )
+
+    else:
+        return values.reshape(n_tests, 4), gains.reshape(n_tests, 4)
 
